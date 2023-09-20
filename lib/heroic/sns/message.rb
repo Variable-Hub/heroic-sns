@@ -14,9 +14,9 @@ module Heroic
         cert_data = URI.parse(cert_url).open
         OpenSSL::X509::Certificate.new(cert_data.read)
       rescue OpenSSL::X509::CertificateError => e
-        raise SNS::Error.new("unable to parse signing certificate: #{e.message}; URL: #{cert_url}")
+        raise SNS::Error.new("unable to parse signing certificate: #{e.message}; URL: #{cert_url}") if !Rails.env.development?
       rescue => e
-        raise SNS::Error.new("unable to retrieve signing certificate: #{e.message}; URL: #{cert_url}")
+        raise SNS::Error.new("unable to retrieve signing certificate: #{e.message}; URL: #{cert_url}") if !Rails.env.development?
       end
     end
 
@@ -122,20 +122,22 @@ module Heroic
       #
       # See: http://docs.aws.amazon.com/sns/latest/gsg/SendMessageToHttp.verify.signature.html
       def verify!
-        age = Time.now - timestamp
-        raise Error.new("timestamp is in the future, age: #{age}", self) if age < 0
-        raise Error.new("timestamp is too old", self) if age > MAXIMUM_ALLOWED_AGE
-        if signature_version != '1'
-          raise Error.new("unknown signature version: #{signature_version}", self)
-        end
-        if signing_cert_url !~ VALID_AWS_URL_PATTERN
-          raise Error.new("signing certificate is not from amazonaws.com", self)
-        end
-        text = string_to_sign # will warn of invalid Type
-        cert = CERTIFICATE_CACHE.get(signing_cert_url)
-        digest = OpenSSL::Digest::SHA1.new
-        unless cert.public_key.verify(digest, signature, text)
-          raise Error.new("message signature is invalid", self)
+        if !Rails.env.development?
+          age = Time.now - timestamp
+          raise Error.new("timestamp is in the future, age: #{age}", self) if age < 0
+          raise Error.new("timestamp is too old", self) if age > MAXIMUM_ALLOWED_AGE
+          if signature_version != '1'
+            raise Error.new("unknown signature version: #{signature_version}", self)
+          end
+          if signing_cert_url !~ VALID_AWS_URL_PATTERN
+            raise Error.new("signing certificate is not from amazonaws.com", self)
+          end
+          text = string_to_sign # will warn of invalid Type
+          cert = CERTIFICATE_CACHE.get(signing_cert_url)
+          digest = OpenSSL::Digest::SHA1.new
+          unless cert.public_key.verify(digest, signature, text)
+            raise Error.new("message signature is invalid", self)
+          end
         end
       end
 
