@@ -113,14 +113,18 @@ module Heroic
           env['rack.input'].rewind
           check_headers!(message, env)
           message.verify!
-          url = message.subscribe_url.gsub(/localhost/,"sns.scorm")
-          case message.type
-          when 'SubscriptionConfirmation'
-            URI.parse(url).open if @auto_confirm
-            return OK_RESPONSE unless @auto_confirm.nil?
-          when 'UnsubscribeConfirmation'
-            URI.parse(url).open if @auto_resubscribe
-            return OK_RESPONSE unless @auto_resubscribe.nil?
+          begin
+            url = message.subscribe_url.gsub(/localhost/,"sns.scorm")
+            case message.type
+            when 'SubscriptionConfirmation'
+              URI.parse(url).open if @auto_confirm
+              return OK_RESPONSE unless @auto_confirm.nil?
+            when 'UnsubscribeConfirmation'
+              URI.parse(url).open if @auto_resubscribe
+              return OK_RESPONSE unless @auto_resubscribe.nil?
+            end
+          rescue
+            Rails.logger.info("sub")
           end
           env['sns.message'] = message
         rescue OpenURI::HTTPError => e
