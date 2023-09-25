@@ -1,0 +1,32 @@
+PATH
+  remote: ..
+  specs:
+    heroic-sns (1.2)
+      json (>= 1.7)
+      rack (>= 1.4)
+
+GEM
+  remote: http://rubygems.org/
+  specs:
+    json (2.6.3)
+    nio4r (2.5.9)
+    power_assert (2.0.3)
+    puma (6.4.0)
+      nio4r (~> 2.0)
+    rack (2.2.8)
+    rake (13.0.6)
+    test-unit (3.6.1)
+      power_assert
+
+PLATFORMS
+  arm64-darwin-22
+
+DEPENDENCIES
+  heroic-sns!
+  puma
+  rack (~> 2.0)
+  rake
+  test-unit (~> 3.3)
+
+BUNDLED WITH
+   2.4.19
