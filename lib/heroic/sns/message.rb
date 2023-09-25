@@ -8,7 +8,6 @@ module Heroic
 
     MAXIMUM_ALLOWED_AGE = 3600 # reject messages older than one hour
     MAXIMUM_ALLOWED_CERTIFICATES = 50
-
     CERTIFICATE_CACHE = Heroic::LRUCache.new(MAXIMUM_ALLOWED_CERTIFICATES) do |cert_url|
       begin
         cert_data = URI.parse(cert_url).open
@@ -123,7 +122,7 @@ module Heroic
       #
       # See: http://docs.aws.amazon.com/sns/latest/gsg/SendMessageToHttp.verify.signature.html
       def verify!
-        unless env['DISABLE_VERIFICATION']
+        unless ENV['DISABLE_VERIFICATION']
           age = Time.now - timestamp
           raise Error.new("timestamp is in the future, age: #{age}", self) if age < 0
           raise Error.new("timestamp is too old", self) if age > MAXIMUM_ALLOWED_AGE
