@@ -109,7 +109,7 @@ module Heroic
       # simply ignored.
       def call_on_topic(env)
         begin
-          message = Message.new(env['rack.input'].read)
+          message = Message.new(env['rack.input'].read, env['DISABLE_VERIFICATION'])
           env['rack.input'].rewind
           check_headers!(message, env)
           message.verify!
@@ -137,7 +137,7 @@ module Heroic
       def call_off_topic(env)
         if env['HTTP_X_AMZ_SNS_MESSAGE_TYPE'] == 'Notification'
           begin
-            message = Message.new(env['rack.input'].read)
+            message = Message.new(env['rack.input'].read, env['DISABLE_VERIFICATION'])
             message.verify!
             URI.parse(message.unsubscribe_url).open
           rescue => e

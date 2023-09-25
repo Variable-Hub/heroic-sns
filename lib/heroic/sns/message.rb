@@ -14,9 +14,9 @@ module Heroic
         cert_data = URI.parse(cert_url).open
         OpenSSL::X509::Certificate.new(cert_data.read)
       rescue OpenSSL::X509::CertificateError => e
-        raise SNS::Error.new("unable to parse signing certificate: #{e.message}; URL: #{cert_url}") if !Rails.env.development?
+        raise SNS::Error.new("unable to parse signing certificate: #{e.message}; URL: #{cert_url}") unless env['DISABLE_VERIFICATION']
       rescue => e
-        raise SNS::Error.new("unable to retrieve signing certificate: #{e.message}; URL: #{cert_url}") if !Rails.env.development?
+        raise SNS::Error.new("unable to retrieve signing certificate: #{e.message}; URL: #{cert_url}") unless env["DISABLE_VERIFICATION"]
       end
     end
 
@@ -29,8 +29,9 @@ module Heroic
     # See: http://docs.aws.amazon.com/sns/latest/gsg/json-formats.html
     class Message
 
-      def initialize(json)
+      def initialize(json, disable_verification)
         @msg = ::JSON.parse(json)
+        @disable_verification = disable_verification
       rescue JSON::ParserError => e
         raise Error.new("failed to parse message as JSON: #{e.message}")
       end
@@ -122,7 +123,7 @@ module Heroic
       #
       # See: http://docs.aws.amazon.com/sns/latest/gsg/SendMessageToHttp.verify.signature.html
       def verify!
-        if !Rails.env.development?
+        unless env['DISABLE_VERIFICATION']
           age = Time.now - timestamp
           raise Error.new("timestamp is in the future, age: #{age}", self) if age < 0
           raise Error.new("timestamp is too old", self) if age > MAXIMUM_ALLOWED_AGE
