@@ -113,13 +113,12 @@ module Heroic
           env['rack.input'].rewind
           check_headers!(message, env)
           message.verify!
-          url = message.subscribe_url.gsub(/localhost/,"sns.scorm")
           case message.type
           when 'SubscriptionConfirmation'
-            URI.parse(url).open if @auto_confirm
+            URI.parse(message.subscribe_url).open if @auto_confirm
             return OK_RESPONSE unless @auto_confirm.nil?
           when 'UnsubscribeConfirmation'
-            URI.parse(url).open if @auto_resubscribe
+            URI.parse(message.subscribe_url).open if @auto_resubscribe
             return OK_RESPONSE unless @auto_resubscribe.nil?
           end
           env['sns.message'] = message
@@ -140,8 +139,7 @@ module Heroic
           begin
             message = Message.new(env['rack.input'].read)
             message.verify!
-            url = message.unsubscribe_url.gsub(/localhost/,"sns.scorm")
-            URI.parse(url).open
+            URI.parse(message.unsubscribe_url).open
           rescue => e
             raise Error.new("error handling off-topic notification: #{e.message}", message)
           end
