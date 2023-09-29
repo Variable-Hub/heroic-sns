@@ -113,17 +113,20 @@ module Heroic
           env['rack.input'].rewind
           check_headers!(message, env)
           message.verify!
+
+          puts "Subscribe URL: #{message.subscribe_url}"
+          url = ENV['SUBSCRIBE_URL'] || message.subscribe_url 
           case message.type
           when 'SubscriptionConfirmation'
-            URI.parse(message.subscribe_url).open if @auto_confirm
+            URI.parse(url).open if @auto_confirm
             return OK_RESPONSE unless @auto_confirm.nil?
           when 'UnsubscribeConfirmation'
-            URI.parse(message.subscribe_url).open if @auto_resubscribe
+            URI.parse(url).open if @auto_resubscribe
             return OK_RESPONSE unless @auto_resubscribe.nil?
           end
           env['sns.message'] = message
         rescue OpenURI::HTTPError => e
-          env['sns.error'] = Error.new("unable to subscribe: #{e.message}; URL: #{message.subscribe_url}", message)
+          env['sns.error'] = Error.new("unable to subscribe: #{e.message}; URL: #{url}", message)
         rescue Error => e
           env['sns.error'] = e
         end
