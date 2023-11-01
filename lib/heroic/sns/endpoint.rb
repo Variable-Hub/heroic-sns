@@ -113,8 +113,6 @@ module Heroic
           env['rack.input'].rewind
           check_headers!(message, env)
           message.verify!
-
-          puts "Subscribe URL: #{message.subscribe_url}"
           url = ENV['SUBSCRIBE_URL'] || message.subscribe_url 
           case message.type
           when 'SubscriptionConfirmation'
